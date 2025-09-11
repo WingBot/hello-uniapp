@@ -1,129 +1,222 @@
-# hello-uniapp
+# 📸 Image & Log Management App
 
-`uni-app`框架示例，一套代码，同时发行到iOS、Android、H5、小程序等多个平台，请使用手机在下方扫码快速体验`uni-app`的强大功能。[官方文档](https://uniapp.dcloud.net.cn/)
+A modern web application for uploading, managing images and viewing system logs, built with Node.js, Express, React, and TypeScript.
 
-## 快速上手
-hello-uniapp 示例工程可以通过两种方式创建， 一种是 HBuilderX, 配套 IDE，集成开发；另一种是 CLI 创建；推荐前者。
-### 通过 HBuilderX 可视化界面创建（推荐）
+## ✨ Features
 
-可视化的方式比较简单，HBuilderX内置相关环境，开箱即用，无需配置nodejs。
+### 🖼️ Image Management
+- **Drag & Drop Upload**: Easy image upload with drag-and-drop interface
+- **Image Processing**: Automatic thumbnail generation using Sharp
+- **Multiple Formats**: Support for JPEG, PNG, GIF, WebP
+- **Image Gallery**: Beautiful grid layout with image previews
+- **Image Viewer**: Full-size image modal viewer
+- **File Management**: Delete images with confirmation
 
-开始之前，开发者需先下载安装如下工具：
+### 📋 Log Management
+- **Real-time Logs**: View system logs in real-time
+- **Log Filtering**: Filter logs by level (Error, Warning, Info)
+- **Log Pagination**: Paginated log viewing for better performance
+- **Test Logs**: Create test log entries for testing
+- **Log Clearing**: Clear all logs functionality
+- **Structured Logging**: JSON-formatted logs with Winston
 
-- HBuilderX：[官方IDE下载地址](https://www.dcloud.io/hbuilderx.html)
+### 🐳 Docker Support
+- **Development Environment**: Complete Docker setup for development
+- **Production Ready**: Optimized Docker configuration
+- **Volume Persistence**: Persistent storage for uploads and logs
+- **Nginx Proxy**: Optional reverse proxy for production
 
-HBuilderX是通用的前端开发工具，但为`uni-app`做了特别强化，请下载App开发版。
+## 🚀 Quick Start
 
-由于截图在 github 不便浏览，参见官方文档 [HBuilderX 可视化界面创建](https://uniapp.dcloud.net.cn/quickstart?id=_1-%e9%80%9a%e8%bf%87-hbuilderx-%e5%8f%af%e8%a7%86%e5%8c%96%e7%95%8c%e9%9d%a2)
+### Prerequisites
+- Node.js 18+ 
+- Docker & Docker Compose
+- Git
 
-### 通过 vue-cli 创建
+### Development Setup
+
+1. **Clone and setup the project:**
+   ```bash
+   git clone <repository-url>
+   cd image-log-app
+   git checkout app-image-log-management
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   # Install backend dependencies
+   npm install
+   
+   # Install frontend dependencies
+   cd client
+   npm install
+   cd ..
+   ```
+
+3. **Start development servers:**
+   ```bash
+   # Start both frontend and backend
+   npm run dev
+   
+   # Or start individually
+   npm run server  # Backend on http://localhost:5000
+   npm run client  # Frontend on http://localhost:3000
+   ```
+
+### Docker Development
+
+1. **Start with Docker Compose:**
+   ```bash
+   # Development environment
+   docker-compose up
+   
+   # With production nginx proxy
+   docker-compose --profile production up
+   ```
+
+2. **Access the application:**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
+   - With Nginx: http://localhost
+
+### Production Deployment
+
+1. **Build and run:**
+   ```bash
+   # Build the application
+   npm run build
+   
+   # Start production server
+   npm start
+   ```
+
+2. **Docker production:**
+   ```bash
+   # Build production image
+   docker build -t image-log-app .
+   
+   # Run production container
+   docker run -p 5000:5000 -v $(pwd)/uploads:/app/server/uploads image-log-app
+   ```
+
+## 📁 Project Structure
 
 ```
-npm install -g @vue/cli
+image-log-app/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   │   ├── Header.tsx
+│   │   │   ├── ImageUpload.tsx
+│   │   │   ├── ImageGallery.tsx
+│   │   │   └── LogViewer.tsx
+│   │   ├── App.tsx         # Main app component
+│   │   └── App.css         # Styles
+│   ├── Dockerfile.dev      # Frontend Docker config
+│   └── package.json
+├── server/                 # Express backend
+│   ├── routes/             # API routes
+│   │   ├── images.js       # Image management routes
+│   │   └── logs.js         # Log management routes
+│   ├── uploads/            # Uploaded images (created at runtime)
+│   ├── logs/               # Log files (created at runtime)
+│   └── index.js            # Main server file
+├── docker-compose.yml      # Docker Compose configuration
+├── Dockerfile             # Backend Docker config
+├── nginx.conf             # Nginx configuration
+└── package.json           # Backend dependencies
 ```
 
-#### 创建uni-app
+## 🔧 API Endpoints
 
-**使用正式版**（对应HBuilderX最新正式版）
+### Image Management
+- `POST /api/images/upload` - Upload an image
+- `GET /api/images` - Get all images
+- `DELETE /api/images/:id` - Delete an image
 
-```
-vue create -p dcloudio/uni-preset-vue my-project
-```
+### Log Management
+- `GET /api/logs` - Get all logs (paginated)
+- `GET /api/logs/level/:level` - Get logs by level
+- `POST /api/logs/test` - Create test log entry
+- `DELETE /api/logs` - Clear all logs
 
-**使用alpha版**（对应HBuilderX最新alpha版）
+### Health Check
+- `GET /api/health` - Health check endpoint
 
-```
-vue create -p dcloudio/uni-preset-vue#alpha my-alpha-project
-```
+## 🛠️ Technologies Used
 
-此时，会提示选择项目模板，选择 `hello uni-app` 项目模板，如下所示：
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **Multer** - File upload handling
+- **Sharp** - Image processing
+- **Winston** - Logging
+- **CORS** - Cross-origin resource sharing
+- **Helmet** - Security headers
 
-<div>
-<img src="https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/h5-cli-01.png" width="300">
-</div>
+### Frontend
+- **React** - UI library
+- **TypeScript** - Type safety
+- **Axios** - HTTP client
+- **React Dropzone** - File upload UI
+- **CSS3** - Styling
 
-创建好后，进入项目目录
-```
-cd my-project
-```
+### DevOps
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
+- **Nginx** - Reverse proxy (optional)
 
-执行该命令运行到 h5 端
-```
-npm run dev:h5
-```
+## 📝 Configuration
 
-欢迎提 issues，推荐到[官方社区](https://ask.dcloud.net.cn/explore/)提问。
+### Environment Variables
+- `PORT` - Server port (default: 5000)
+- `NODE_ENV` - Environment (development/production)
 
-## 扫码体验
+### File Upload Limits
+- Maximum file size: 10MB
+- Supported formats: JPEG, PNG, GIF, WebP
+- Automatic thumbnail generation: 300x300px
 
-<div class="quick">
-    <p>一套代码编到10个平台，这不是梦想。眼见为实，扫描10个二维码，亲自体验最全面的跨平台效果！</p>
-    <div style="display: flex;">
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://web-assets.dcloud.net.cn/unidoc/zh/uni-android.png" width="160" />
-        </div>
-        <b>Android版</b>
-      </a>
-      <a href="https://itunes.apple.com/cn/app/hello-uni-app/id1417078253?mt=8" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://web-assets.dcloud.net.cn/unidoc/zh/uni-h5.png" width="160" />
-        </div>
-        <b>iOS版</b>
-      </a>
-      <a href="https://hellouniapp.dcloud.net.cn/" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/uni-h5-hosting-qr.png" width="160" />
-        </div>
-        <b>H5版</b>
-      </a>
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box"><img src="//img.cdn.aliyun.dcloud.net.cn/guide/uniapp/gh_33446d7f7a26_430.jpg" width="160" /></div>
-        <b>微信小程序版</b>
-      </a>
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box"><img src="https://web-assets.dcloud.net.cn/unidoc/zh/alipay1.png" width="160" /></div>
-        <b>支付宝小程序版</b>
-      </a>
-    </div>
-    <div class="flex-img-group-view" style="margin-top: 20px;">
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box"><img src="https://web-assets.dcloud.net.cn/unidoc/zh/baidu-uniapp.png" width="160" /></div>
-        <b>百度小程序版</b>
-      </a>
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/mp-toutiao.png" width="160" />
-        </div>
-        <b>字节跳动小程序版</b>
-      </a>
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/hello-uni-qq.png" width="160" />
-        </div>
-        <b>QQ小程序版</b>
-      </a>
-      <a href="//m3w.cn/uniapp" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/hello-uni-qa-union.png" width="160" />
-        </div>
-        <b>快应用</b>
-      </a>
-      <a href="https://so.mp.360.cn/mp.html?appid=qh4j181qqtru354st6" target="_blank" class="clear-style barcode-view">
-        <div class="barcode-img-box">
-          <img src="https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/hello-uni-mp-360-qr.png" width="160" />
-        </div>
-        <b>360小程序</b>
-      </a>
-    </div>
-    <p>
-        <em>注：某些平台不能提交简单demo，故补充了一些其他功能；hello uni-app示例代码可从[github](https://github.com/dcloudio/hello-uniapp)获取</em></br>
-        <em>快应用仅支持 vivo 、oppo、华为</em></br>
-        <em>360小程序仅 windows平台支持，需要在360浏览器中打开</em></br>
-    </p>
-</div>
+### Logging Configuration
+- Log levels: error, warn, info
+- Log files: `combined.log`, `error.log`
+- JSON format with timestamps
 
-`uni-app`官网文档详见[https://uniapp.dcloud.io](https://uniapp.dcloud.io)
+## 🔒 Security Features
 
-更多uni-app的模板、示例详见[插件市场](https://ext.dcloud.net.cn/)
+- **Helmet.js** - Security headers
+- **File type validation** - Only image files allowed
+- **File size limits** - Prevents large file uploads
+- **CORS protection** - Configurable cross-origin policies
+- **Input validation** - Request validation and sanitization
 
+## 🚀 Performance Features
+
+- **Image optimization** - Automatic JPEG compression
+- **Thumbnail generation** - Reduced file sizes for gallery
+- **Pagination** - Efficient log viewing
+- **Static file serving** - Optimized file delivery
+- **Docker optimization** - Multi-stage builds
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -am 'Add feature'`
+4. Push to branch: `git push origin feature-name`
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Check the documentation
+- Review the API endpoints
+
+---
+
+**Happy coding! 🎉**
