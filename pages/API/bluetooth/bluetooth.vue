@@ -35,15 +35,28 @@
 				>
 					选择设备
 				</button>
-				<view v-if="equipment.length > 0">
-					{{
-						(connected ? '已连接设备' : '已选择设备') +
-							' : ' +
-							equipment[0].name +
-							' (' +
-							equipment[0].deviceId +
-							')'
-					}}
+				<view v-if="equipment.length > 0" class="device-info-card">
+					<view class="device-title">
+						{{ (connected ? '已连接设备' : '已选择设备') }}
+					</view>
+					<view class="device-details">
+						<view class="device-name">
+							<text class="label">设备名称:</text>
+							<text class="value">{{ equipment[0].name || equipment[0].localName || '未知设备' }}</text>
+						</view>
+						<view class="device-id">
+							<text class="label">设备ID:</text>
+							<text class="value">{{ equipment[0].deviceId }}</text>
+						</view>
+						<view class="device-rssi">
+							<text class="label">信号强度:</text>
+							<text class="value">{{ equipment[0].RSSI }}dBm</text>
+						</view>
+						<view class="device-services" v-if="equipment[0].advertisServiceUUIDs">
+							<text class="label">广播服务:</text>
+							<text class="value">{{ equipment[0].advertisServiceUUIDs.length }}个</text>
+						</view>
+					</view>
 				</view>
 				<button type="primary" :disabled="disabled[4]" @click="createBLEConnection">
 					连接蓝牙设备
@@ -91,21 +104,51 @@
 		<view v-if="maskShow" class="uni-mask" @touchmove.stop.prevent="moveHandle" @click="maskclose">
 			<scroll-view class="uni-scroll_box" scroll-y @touchmove.stop.prevent="moveHandle" @click.stop="moveHandle">
 				<view class="uni-title">
-					已经发现{{ list.length }}{{ showMaskType === 'device' ? '台设备' : '个服务' }}:
+					<view v-if="showMaskType === 'device'">
+						<view class="search-status">
+							<text v-if="searchLoad" class="searching">🔍 正在搜索设备...</text>
+							<text v-else>已发现 {{ list.length }} 台设备</text>
+						</view>
+						<view v-if="list.length > 0" class="search-tip">
+							点击设备进行连接
+						</view>
+					</view>
+					<view v-else>
+						已发现{{ list.length }}{{ showMaskType === 'service' ? '个服务' : '个特征值' }}:
+					</view>
 				</view>
 				<view
-					class="uni-list-box"
+					class="uni-list-box device-item"
 					v-for="(item, index) in list"
 					:key="index"
 					@click="tapQuery(item)"
 				>
-					<view v-if="showMaskType === 'device'">
-						<view class="uni-list_name">{{ item.name || item.localName }}</view>
-						<view class="uni-list_item">信号强度:{{ item.RSSI }}dBm</view>
-						<view class="uni-list_item">UUID:{{ item.deviceId }}</view>
-						<!-- <view class="list-item" v-if="showMaskType === 'device'">
-							Service数量:{{ item.advertisServiceUUIDs.length }}
-						</view> -->
+					<view v-if="showMaskType === 'device'" class="device-item-content">
+						<view class="device-header">
+							<view class="device-name">{{ item.name || item.localName || '未知设备' }}</view>
+							<view class="device-status">
+								<view class="device-rssi" :class="getRSSIClass(item.RSSI)">
+									{{ item.RSSI }}dBm
+								</view>
+								<view v-if="equipment.length > 0 && equipment[0].deviceId === item.deviceId" class="device-selected">
+									✓ 已选择
+								</view>
+							</view>
+						</view>
+						<view class="device-info">
+							<view class="device-id">
+								<text class="info-label">设备ID:</text>
+								<text class="info-value">{{ item.deviceId }}</text>
+							</view>
+							<view class="device-services" v-if="item.advertisServiceUUIDs && item.advertisServiceUUIDs.length > 0">
+								<text class="info-label">广播服务:</text>
+								<text class="info-value">{{ item.advertisServiceUUIDs.length }}个</text>
+							</view>
+							<view class="device-manufacturer" v-if="item.manufacturerData">
+								<text class="info-label">制造商数据:</text>
+								<text class="info-value">{{ item.manufacturerData.length }}字节</text>
+							</view>
+						</view>
 					</view>
 					<view v-if="showMaskType === 'service'">
 						<view class="uni-list_item" style="line-height:2.2;">
@@ -161,6 +204,15 @@ export default {
 	},
 	methods: {
 		moveHandle() {},
+		/**
+		 * 根据RSSI值返回信号强度样式类
+		 */
+		getRSSIClass(rssi) {
+			if (rssi >= -50) return 'rssi-excellent';
+			if (rssi >= -70) return 'rssi-good';
+			if (rssi >= -85) return 'rssi-fair';
+			return 'rssi-poor';
+		},
 		/**
 		 * 关闭遮罩
 		 */
@@ -290,7 +342,7 @@ export default {
 					this.newDeviceLoad = false;
 					console.log('获取蓝牙设备成功:' + res.errMsg);
 					// console.log(JSON.stringify(res))
-					this.list = res.devices;
+					this.list = this.processDeviceList(res.devices);
 				},
 				fail: e => {
 					console.log('获取蓝牙设备错误，错误码：' + e.errCode);
@@ -299,6 +351,34 @@ export default {
 					}
 				}
 			});
+		},
+		/**
+		 * 处理设备列表：去重、排序、格式化
+		 */
+		processDeviceList(devices) {
+			// 去重：根据deviceId去重
+			const uniqueDevices = [];
+			const deviceIds = new Set();
+			
+			devices.forEach(device => {
+				if (!deviceIds.has(device.deviceId)) {
+					deviceIds.add(device.deviceId);
+					// 格式化设备信息
+					const processedDevice = {
+						...device,
+						name: device.name || device.localName || '未知设备',
+						RSSI: device.RSSI || -100, // 默认RSSI值
+						advertisServiceUUIDs: device.advertisServiceUUIDs || [],
+						manufacturerData: device.manufacturerData || null
+					};
+					uniqueDevices.push(processedDevice);
+				}
+			});
+			
+			// 按RSSI信号强度排序（信号强的在前）
+			uniqueDevices.sort((a, b) => b.RSSI - a.RSSI);
+			
+			return uniqueDevices;
 		},
 		/**
 		 * 获取本机蓝牙适配器状态
@@ -676,6 +756,171 @@ function toast(content, showCancel = false) {
 	font-size: 24rpx;
 	color: #555;
 	line-height: 1.5;
+}
+
+/* 设备信息卡片样式 */
+.device-info-card {
+	background: #f8f9fa;
+	border: 1px solid #e9ecef;
+	border-radius: 8rpx;
+	padding: 20rpx;
+	margin: 20rpx 0;
+}
+
+.device-title {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: #007AFF;
+	margin-bottom: 15rpx;
+}
+
+.device-details {
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
+}
+
+.device-name, .device-id, .device-rssi, .device-services {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.label {
+	font-size: 26rpx;
+	color: #666;
+	font-weight: 500;
+}
+
+.value {
+	font-size: 26rpx;
+	color: #333;
+	font-family: monospace;
+}
+
+/* 设备列表项样式 */
+.device-item {
+	border: 1px solid #e9ecef;
+	border-radius: 8rpx;
+	margin: 10rpx 20rpx;
+	padding: 20rpx;
+	background: #fff;
+	box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+}
+
+.device-item:active {
+	background: #f8f9fa;
+	transform: scale(0.98);
+}
+
+.device-item-content {
+	width: 100%;
+}
+
+.device-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15rpx;
+}
+
+.device-status {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4rpx;
+}
+
+.device-selected {
+	font-size: 20rpx;
+	color: #28a745;
+	font-weight: bold;
+	background: #d4edda;
+	padding: 2rpx 8rpx;
+	border-radius: 8rpx;
+}
+
+.device-name {
+	font-size: 30rpx;
+	font-weight: bold;
+	color: #333;
+	flex: 1;
+}
+
+.device-rssi {
+	font-size: 24rpx;
+	font-weight: bold;
+	padding: 4rpx 12rpx;
+	border-radius: 12rpx;
+	color: #fff;
+}
+
+.rssi-excellent {
+	background: #28a745;
+}
+
+.rssi-good {
+	background: #17a2b8;
+}
+
+.rssi-fair {
+	background: #ffc107;
+	color: #333;
+}
+
+.rssi-poor {
+	background: #dc3545;
+}
+
+.device-info {
+	display: flex;
+	flex-direction: column;
+	gap: 6rpx;
+}
+
+.device-id, .device-services, .device-manufacturer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.info-label {
+	font-size: 24rpx;
+	color: #666;
+}
+
+.info-value {
+	font-size: 24rpx;
+	color: #333;
+	font-family: monospace;
+	word-break: break-all;
+	text-align: right;
+	max-width: 60%;
+}
+
+/* 搜索状态样式 */
+.search-status {
+	font-size: 28rpx;
+	font-weight: bold;
+	color: #333;
+	margin-bottom: 10rpx;
+}
+
+.searching {
+	color: #007AFF;
+	animation: pulse 1.5s infinite;
+}
+
+.search-tip {
+	font-size: 24rpx;
+	color: #666;
+	font-style: italic;
+}
+
+@keyframes pulse {
+	0% { opacity: 1; }
+	50% { opacity: 0.5; }
+	100% { opacity: 1; }
 }
 
 .uni-success_box {
